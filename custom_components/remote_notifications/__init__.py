@@ -13,6 +13,7 @@ from homeassistant.const import (
 )
 import homeassistant.helpers.config_validation as cv
 
+from homeassistant.config import async_hass_config_yaml
 from homeassistant.components import webhook
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,14 +48,23 @@ async def handle_webhook_with_config(hass, webhook_id, request, config):
 	return await handle_data(data, hass, config)
 	
 async def handle_data(data, hass, config):
+	configured_target_service_map = config["target_service_map"]
+
+	"""
+	This may be slightly slower as we load the configuration on
+	the fly each time we trigger notifications
+	"""
+	configFile = await async_hass_config_yaml(hass)
+	configured_target_service_map = configFile[DOMAIN]["target_service_map"]
+	
 	target_services = []
 	if "targets" in data:
 		for target in data['targets']:
-			if target in config["target_service_map"] and config["target_service_map"][target] not in target_services:
-				target_services.append(config["target_service_map"][target])
+			if target in configured_target_service_map and configured_target_service_map[target] not in target_services:
+				target_services.append(configured_target_service_map[target])
 
 	if len(target_services) == 0:
-		target_services.append(config["target_service_map"]["conrad"])
+		target_services.append(configured_target_service_map["conrad"])
 	
 	if "clearNotification" in data and data["clearNotification"] == True and "tag" in data:
 		notification_message = 'clear_notification'
@@ -86,12 +96,12 @@ async def handle_data(data, hass, config):
 		notification_data["audio"] = data["audio"]
 	if "interruptionLevel" in data:
 		notification_data["push"]["interruption-level"] = data["interruptionLevel"]
-	if "sound" in data and data["sound"] == "none":
-		notification_data["push"]["sound"] = "none"
+	if "critical" in data and data["critical"] is True:
+		notification_data["push"]["sound"]["critical"] = data["critical"]
+		notification_data["push"]["sound"]["volume"] = data["critical"]
 	else:
-		if "critical" in data:
-			notification_data["push"]["sound"]["critical"] = data["critical"]
-			notification_data["push"]["sound"]["volume"] = data["critical"]
+		if "sound" in data and data["sound"] == "none":
+			notification_data["push"]["sound"] = "none"
 		else:
 			notification_data["push"]["sound"]["critical"] = 0
 			notification_data["push"]["sound"]["volume"] = 0
