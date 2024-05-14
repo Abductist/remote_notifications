@@ -1,0 +1,13 @@
+{
+    "domain": "remote_notifications",
+    "name": "Remote Notifications",
+	"version": "1.0.0",
+    "documentation": "https://github.com/abductist/remote_notifications",
+    "dependencies": [
+        "webhook"
+    ],
+    "codeowners": [
+        "@abductist"
+    ],
+    "requirements": []
+}
