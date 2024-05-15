@@ -15,6 +15,7 @@ import homeassistant.helpers.config_validation as cv
 
 from homeassistant.config import async_hass_config_yaml
 from homeassistant.components import webhook
+from homeassistant.helpers.service import async_register_admin_service
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,6 +33,15 @@ CONFIG_SCHEMA = vol.Schema(
 	extra=vol.ALLOW_EXTRA,
 )
 '''
+SERVICE_SCHEMA = vol.Schema(
+	{
+		vol.Required("targets"): cv.ensure_list,
+		vol.Required("message"): cv.string,
+	},
+	extra=vol.ALLOW_EXTRA,
+)
+
+
 async def handle_event_with_hass_config(event, hass, config):
 	_LOGGER.debug("Received remote notification")
 	return await handle_data(event.data, hass, config)
@@ -46,10 +56,14 @@ async def handle_webhook_with_config(hass, webhook_id, request, config):
 		return None
 	
 	return await handle_data(data, hass, config)
-	
+
+async def handle_service_call_with_hass_config(service_call, hass, config):
+	data = {prop: value for prop, value in service_call.data.items()}
+	return await handle_data(data, hass, config)
+
 async def handle_data(data, hass, config):
 	configured_target_service_map = config["target_service_map"]
-
+	
 	"""
 	This may be slightly slower as we load the configuration on
 	the fly each time we trigger notifications
@@ -62,7 +76,7 @@ async def handle_data(data, hass, config):
 		for target in data['targets']:
 			if target in configured_target_service_map and configured_target_service_map[target] not in target_services:
 				target_services.append(configured_target_service_map[target])
-
+	
 	if len(target_services) == 0:
 		target_services.append(configured_target_service_map["conrad"])
 	
@@ -105,14 +119,13 @@ async def handle_data(data, hass, config):
 		else:
 			notification_data["push"]["sound"]["critical"] = 0
 			notification_data["push"]["sound"]["volume"] = 0
-
+	
 	notification = {
 		"message": notification_message,
 		"data": notification_data
 	}
 	if "title" in data:
 		notification["title"] = data["title"]
-	
 	
 	for target_service in target_services:
 		target_service_array = target_service.split(".")
@@ -122,11 +135,16 @@ async def handle_data(data, hass, config):
 
 async def async_setup(hass, config):
 	_LOGGER.debug('Initiating Remote Notifications Webhooks!')
+	async def handle_service_call(data):
+		return await handle_service_call_with_hass_config(data, hass, config[DOMAIN])
 	async def handle_event(event):
 		return await handle_event_with_hass_config(event, hass, config[DOMAIN])
 	async def handle_webhook(hass, webhook_id, request):
 		return await handle_webhook_with_config(hass, webhook_id, request, config[DOMAIN])
-
+	
+	service = "notify"
+	
+	async_register_admin_service(hass, DOMAIN, service, handle_service_call, SERVICE_SCHEMA)
 	if CONF_EVENT in config[DOMAIN]:
 		event_type = config[DOMAIN][CONF_EVENT]
 		hass.bus.async_listen(event_type, handle_event)
