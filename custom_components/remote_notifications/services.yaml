@@ -1,0 +1,74 @@
+# Describes the format for available services
+notify:
+  fields:
+    targets:
+      required: true
+      example:
+        - "connor"
+        - "anna"
+      selector:
+        object:
+    message:
+      required: true
+      example: "The contents of my awesome notification"
+      selector:
+        text:
+    title:
+      required: false
+      example: "Message Title!"
+      selector:
+        text:
+    subtitle:
+      required: false
+      selector:
+        text:
+    url:
+      required: false
+      selector:
+        text:
+          type: url
+    actions:
+      required: false
+      selector:
+        object:
+    category:
+      required: false
+      selector:
+        text:
+    tag:
+      required: false
+      selector:
+        text:
+    image:
+      required: false
+      selector:
+        text:
+          type: url
+    video:
+      required: false
+      selector:
+        text:
+          type: url
+    audio:
+      required: false
+      selector:
+        text:
+          type: url
+    interruptionLevel:
+      required: false
+      default: "active"
+      selector:
+        select:
+          options:
+            - "passive"
+            - "active"
+            - "time-sensitive"
+            - "critical"
+    critical:
+      required: false
+      selector:
+        boolean:
+    sound:
+      required: false
+      selector:
+        text:
