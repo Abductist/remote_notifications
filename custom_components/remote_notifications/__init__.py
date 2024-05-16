@@ -114,8 +114,8 @@ async def handle_data(data, hass, config):
 		notification_data["push"]["sound"]["critical"] = data["critical"]
 		notification_data["push"]["sound"]["volume"] = data["critical"]
 	else:
-		if "sound" in data and data["sound"] == "none":
-			notification_data["push"]["sound"] = "none"
+		if "sound" in data:
+			notification_data["push"]["sound"] = data["sound"]
 		else:
 			notification_data["push"]["sound"]["critical"] = 0
 			notification_data["push"]["sound"]["volume"] = 0
