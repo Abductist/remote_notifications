@@ -78,7 +78,10 @@ async def handle_data(data, hass, config):
 				target_services.append(configured_target_service_map[target])
 	
 	if len(target_services) == 0:
-		target_services.append(configured_target_service_map["conrad"])
+		if "default" in configured_target_service_map:
+			target_services.append(configured_target_service_map["default"])
+		else:
+			raise Exception("No known targets called and no default target is set either")
 	
 	if "clearNotification" in data and data["clearNotification"] == True and "tag" in data:
 		notification_message = 'clear_notification'
