@@ -1,7 +1,7 @@
 {
     "domain": "remote_notifications",
     "name": "Remote Notifications",
-	"version": "1.2.0",
+	"version": "1.3.0",
     "documentation": "https://github.com/abductist/remote_notifications",
     "dependencies": [
         "webhook"
