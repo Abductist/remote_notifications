@@ -111,17 +111,18 @@ async def handle_data(data, hass, config):
 		notification_data["video"] = data["video"]
 	if "audio" in data:
 		notification_data["audio"] = data["audio"]
-	if "interruptionLevel" in data:
-		notification_data["push"]["interruption-level"] = data["interruptionLevel"]
-	if "critical" in data and data["critical"] is True:
-		notification_data["push"]["sound"]["critical"] = data["critical"]
-		notification_data["push"]["sound"]["volume"] = data["critical"]
-	else:
-		if "sound" in data:
+	if "sound" in data:
+		if type(data["sound"]) is str:
+			notification_data["push"]["sound"] = {"name": data["sound"], "critical": 0, "volume": 1}
+		elif type(data["sound"]) is dict:
 			notification_data["push"]["sound"] = data["sound"]
 		else:
-			notification_data["push"]["sound"]["critical"] = 0
-			notification_data["push"]["sound"]["volume"] = 0
+			raise TypeError("Unexpected type "+type(data["sound"]))
+	if "interruptionLevel" in data:
+		notification_data["push"]["interruption-level"] = data["interruptionLevel"]
+		if data["interruptionLevel"] is "critical":
+			notification_data["push"]["sound"]["critical"] = 1
+			notification_data["push"]["sound"]["volume"] = 1.0
 	
 	notification = {
 		"message": notification_message,
